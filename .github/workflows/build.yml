@@ -58,19 +58,22 @@ jobs:
 
       - name: Setup Gradle Wrapper
         run: |
-          # پیدا کردن مسیر پروژه
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
           cd "$PROJECT_DIR"
           
-          # اگر فایل gradlew وجود نداشت، آن را با gradle نصب شده می‌سازیم
           if [ ! -f "./gradlew" ]; then
             echo "gradlew not found. Creating wrapper..."
             
-            # دانلود و نصب Gradle (نسخه 7.5.1 برای سازگاری با Java 17)
+            # ایجاد پوشه مقصد قبل از اکسترکت
+            mkdir -p $HOME/gradle
+            
+            # دانلود و اکسترکت Gradle
             wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
             unzip -q gradle-7.5.1-bin.zip -d $HOME/gradle
+            
+            # تنظیم PATH
             export PATH=$PATH:$HOME/gradle/gradle-7.5.1/bin
             
             # ساخت فایل های wrapper
@@ -83,7 +86,6 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          # پیدا کردن مسیر پروژه
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
