@@ -3,8 +3,8 @@ name: GTA 1 Android Build
 on:
   push:
     paths:
-      - 'GTA1_Kotlin_Android44 (1).zip'
-      - 'GTA1_Kotlin_Android44 (1).z0*'
+      - '*.zip'
+      - '*.z0*'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
@@ -40,10 +40,18 @@ jobs:
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-28" "build-tools;29.0.3"
 
-      - name: Extract GTA 1 project (using 7z)
+      - name: Rename and Extract ZIP files
         run: |
+          # تغییر نام فایل های z01 تا z05 به نام project
+          for i in 01 02 03 04 05; do
+            if [ -f "GTA1_Kotlin_Android44 (1).z$i" ]; then
+              mv "GTA1_Kotlin_Android44 (1).z$i" "project.z$i"
+            fi
+          done
+          
+          # اکسترکت کردن فایل با نام جدید
           mkdir -p extracted
-          7z x "GTA1_Kotlin_Android44 (1).zip" -oextracted
+          7z x project.zip -oextracted
 
       - name: Build Debug APK
         run: |
