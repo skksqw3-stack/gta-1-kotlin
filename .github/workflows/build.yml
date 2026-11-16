@@ -1,11 +1,8 @@
-
 name: GTA 1 Android Build
 
 on:
   push:
-    paths:
-      - 'GTA1_Kotlin_Android44 (1).zip'
-      - '.github/workflows/build.yml'
+    branches: [ main ] # یا هر شاخه‌ای که استفاده می‌کنید
   workflow_dispatch:
 
 permissions:
@@ -34,35 +31,24 @@ jobs:
             platforms;android-28
             build-tools;29.0.3
 
-      - name: Extract GTA 1 project
-        run: |
-          mkdir -p extracted
-          unzip -q "GTA1_Kotlin_Android44 (1).zip" -d extracted
+      # مرحله Extract حذف شد چون کدها مستقیماً در مخزن هستند
 
       - name: Find Android project
         run: |
-          PROJECT_DIR=$(find extracted -type f \
-            \( -name "settings.gradle" -o -name "settings.gradle.kts" \) \
-            -print -quit | xargs -r dirname)
-
+          # فرض بر این است که فایل settings.gradle در روت مخزن یا یک پوشه مشخص است
+          PROJECT_DIR=$(find . -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit | xargs -r dirname)
+          
           if [ -z "$PROJECT_DIR" ]; then
-            PROJECT_DIR=$(find extracted -type f \
-              -path "*/app/build.gradle" \
-              -print -quit | sed 's|/app/build.gradle||')
-          fi
-
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "ERROR: Android Gradle project not found in ZIP."
+            echo "ERROR: Android Gradle project not found."
             exit 1
           fi
-
+          
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          echo "Android project: $PROJECT_DIR"
+          echo "Android project found at: $PROJECT_DIR"
 
       - name: Build Debug APK
         run: |
           cd "$PROJECT_DIR"
-
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
             ./gradlew assembleDebug --stacktrace
@@ -75,5 +61,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: GTA1-Android-APK
-          path: extracted/**/build/outputs/apk/debug/*.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
