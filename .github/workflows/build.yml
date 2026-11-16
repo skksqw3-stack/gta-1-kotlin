@@ -56,35 +56,34 @@ jobs:
           mkdir -p extracted
           7z x project.zip -oextracted
 
-      - name: Fix JCenter Only
+      - name: Fix JCenter
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
           echo "Fixing jcenter in: $PROJECT_DIR"
           
-          # فقط jcenter را با mavenCentral جایگزین می‌کنیم
           find "$PROJECT_DIR" -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
           find "$PROJECT_DIR" -name "settings.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
           
           echo "JCenter replaced with MavenCentral."
 
-      - name: Setup Gradle Wrapper 7.5.1
+      - name: Setup Gradle Wrapper 6.9.1
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
           cd "$PROJECT_DIR"
           
-          # دانلود Gradle 7.5.1 و اکسترکت آن
-          mkdir -p $HOME/gradle-7.5.1
-          wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
-          unzip -q gradle-7.5.1-bin.zip -d $HOME/gradle-7.5.1
+          # دانلود Gradle 6.9.1 و اکسترکت آن
+          mkdir -p $HOME/gradle-6.9.1
+          wget -q https://services.gradle.org/distributions/gradle-6.9.1-bin.zip
+          unzip -q gradle-6.9.1-bin.zip -d $HOME/gradle-6.9.1
           
-          # استفاده از مسیر کامل Gradle 7.5.1 برای ساخت wrapper
-          $HOME/gradle-7.5.1/gradle-7.5.1/bin/gradle wrapper --gradle-version 7.5.1
+          # استفاده از مسیر کامل Gradle 6.9.1 برای ساخت wrapper
+          $HOME/gradle-6.9.1/gradle-6.9.1/bin/gradle wrapper --gradle-version 6.9.1
           
-          echo "Gradle wrapper 7.5.1 created successfully."
+          echo "Gradle wrapper 6.9.1 created successfully."
 
       - name: Set up Java 11 (for Project Build)
         uses: actions/setup-java@v4
