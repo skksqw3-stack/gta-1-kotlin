@@ -56,6 +56,21 @@ jobs:
           mkdir -p extracted
           7z x project.zip -oextracted
 
+      - name: Fix JCenter in build.gradle
+        run: |
+          SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+          
+          echo "Fixing build.gradle in: $PROJECT_DIR"
+          
+          # جایگزینی jcenter() با mavenCentral() در فایل build.gradle اصلی
+          find "$PROJECT_DIR" -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+          
+          # همچنین در صورت وجود فایل settings.gradle نیز این کار را انجام می‌دهیم
+          find "$PROJECT_DIR" -name "settings.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+          
+          echo "JCenter replaced with MavenCentral."
+
       - name: Setup Gradle Wrapper
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
@@ -66,19 +81,12 @@ jobs:
           if [ ! -f "./gradlew" ]; then
             echo "gradlew not found. Creating wrapper..."
             
-            # ایجاد پوشه مقصد قبل از اکسترکت
             mkdir -p $HOME/gradle
-            
-            # دانلود و اکسترکت Gradle
             wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
             unzip -q gradle-7.5.1-bin.zip -d $HOME/gradle
-            
-            # تنظیم PATH
             export PATH=$PATH:$HOME/gradle/gradle-7.5.1/bin
             
-            # ساخت فایل های wrapper
             gradle wrapper --gradle-version 7.5.1
-            
             echo "Gradle wrapper created successfully."
           else
             echo "gradlew already exists."
