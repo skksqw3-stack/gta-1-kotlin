@@ -19,6 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # مرحله 1: نصب Android SDK با Java 17
       - name: Set up Java 17 (for SDK Manager)
         uses: actions/setup-java@v4
         with:
@@ -40,6 +41,7 @@ jobs:
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-28" "build-tools;29.0.3"
 
+      # مرحله 2: استخراج فایل‌ها (بدون نیاز به Java)
       - name: Rename and Extract ZIP files
         run: |
           for i in 01 02 03 04 05; do
@@ -56,6 +58,7 @@ jobs:
           mkdir -p extracted
           7z x project.zip -oextracted
 
+      # مرحله 3: اصلاح jcenter (بدون نیاز به Java)
       - name: Fix JCenter
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
@@ -68,6 +71,14 @@ jobs:
           
           echo "JCenter replaced with MavenCentral."
 
+      # مرحله 4: سوییچ به Java 11 قبل از هر کاری با Gradle
+      - name: Set up Java 11 (for Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      # مرحله 5: دانلود Gradle 6.9.1 و ساخت wrapper با Java 11
       - name: Setup Gradle Wrapper 6.9.1
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
@@ -75,22 +86,20 @@ jobs:
           
           cd "$PROJECT_DIR"
           
-          # دانلود Gradle 6.9.1 و اکسترکت آن
+          echo "JAVA_HOME is: $JAVA_HOME"
+          java -version
+          
+          # دانلود Gradle 6.9.1
           mkdir -p $HOME/gradle-6.9.1
           wget -q https://services.gradle.org/distributions/gradle-6.9.1-bin.zip
           unzip -q gradle-6.9.1-bin.zip -d $HOME/gradle-6.9.1
           
-          # استفاده از مسیر کامل Gradle 6.9.1 برای ساخت wrapper
+          # ساخت wrapper با Java 11
           $HOME/gradle-6.9.1/gradle-6.9.1/bin/gradle wrapper --gradle-version 6.9.1
           
           echo "Gradle wrapper 6.9.1 created successfully."
 
-      - name: Set up Java 11 (for Project Build)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '11'
-
+      # مرحله 6: بیلد اصلی
       - name: Build Debug APK
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
@@ -102,9 +111,9 @@ jobs:
           
           chmod +x ./gradlew
           
-          # اجرای بیلد با wrapper محلی
           ./gradlew assembleDebug --stacktrace
 
+      # مرحله 7: آپلود APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
