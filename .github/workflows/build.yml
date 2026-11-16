@@ -25,16 +25,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 11076708
-          # اینجا packages را حذف کردیم
-
-      - name: Install Android SDK Packages
+      - name: Setup Android SDK Manually
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-28" "build-tools;29.0.3"
+          # دانلود و نصب cmdline-tools
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip
+          mv cmdline-tools latest
+          rm commandlinetools-linux-11076708_latest.zip
+          
+          # تنظیم متغیرهای محیطی
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          
+          # پذیرش لایسنس‌ها
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          
+          # نصب بسته‌های مورد نیاز
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-28" "build-tools;29.0.3"
 
       - name: Extract GTA 1 project (using 7z)
         run: |
