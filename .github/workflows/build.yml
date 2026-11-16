@@ -63,34 +63,27 @@ jobs:
           
           echo "Fixing build.gradle in: $PROJECT_DIR"
           
-          # جایگزینی jcenter() با mavenCentral() در فایل build.gradle اصلی
           find "$PROJECT_DIR" -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
-          
-          # همچنین در صورت وجود فایل settings.gradle نیز این کار را انجام می‌دهیم
           find "$PROJECT_DIR" -name "settings.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
           
           echo "JCenter replaced with MavenCentral."
 
-      - name: Setup Gradle Wrapper
+      - name: Setup Gradle Wrapper 7.5.1
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
           cd "$PROJECT_DIR"
           
-          if [ ! -f "./gradlew" ]; then
-            echo "gradlew not found. Creating wrapper..."
-            
-            mkdir -p $HOME/gradle
-            wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
-            unzip -q gradle-7.5.1-bin.zip -d $HOME/gradle
-            export PATH=$PATH:$HOME/gradle/gradle-7.5.1/bin
-            
-            gradle wrapper --gradle-version 7.5.1
-            echo "Gradle wrapper created successfully."
-          else
-            echo "gradlew already exists."
-          fi
+          # دانلود Gradle 7.5.1 و اکسترکت آن
+          mkdir -p $HOME/gradle-7.5.1
+          wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
+          unzip -q gradle-7.5.1-bin.zip -d $HOME/gradle-7.5.1
+          
+          # استفاده از مسیر کامل Gradle 7.5.1 برای ساخت wrapper
+          $HOME/gradle-7.5.1/gradle-7.5.1/bin/gradle wrapper --gradle-version 7.5.1
+          
+          echo "Gradle wrapper 7.5.1 created successfully."
 
       - name: Build Debug APK
         run: |
@@ -102,6 +95,8 @@ jobs:
           cd "$PROJECT_DIR"
           
           chmod +x ./gradlew
+          
+          # اجرای بیلد با wrapper محلی (که نسخه 7.5.1 را استفاده می‌کند)
           ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
