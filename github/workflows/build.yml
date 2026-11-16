@@ -1,0 +1,68 @@
+
+name: GTA 1 Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'GTA1_Kotlin_Android44.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android packages
+        run: |
+          sdkmanager "platforms;android-28" \
+                     "build-tools;29.0.3"
+
+      - name: Extract GTA 1 ZIP
+        run: |
+          mkdir -p extracted
+          unzip -o GTA1_Kotlin_Android44 (1).zip -d extracted
+
+          echo "Extracted files:"
+          ls -la extracted
+
+      - name: Find Android project
+        run: |
+          PROJECT_DIR="extracted/GTA1_Kotlin_Android44"
+
+          if [ ! -f "$PROJECT_DIR/settings.gradle" ]; then
+            echo "Android project not found!"
+            exit 1
+          fi
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+      - name: Setup Gradle 5.6.4
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '5.6.4'
+
+      - name: Build APK
+        run: |
+          gradle --no-daemon \
+            -p "$PROJECT_DIR" \
+            assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GTA1-Android-APK
+          path: extracted/GTA1_Kotlin_Android44/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
