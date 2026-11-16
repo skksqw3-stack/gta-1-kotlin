@@ -49,7 +49,14 @@ jobs:
             fi
           done
           
-          # اکسترکت کردن فایل با نام جدید
+          # بررسی وجود فایل project.zip
+          if [ ! -f "project.zip" ]; then
+            echo "ERROR: project.zip not found!"
+            ls -la
+            exit 1
+          fi
+          
+          # اکسترکت کردن فایل
           mkdir -p extracted
           7z x project.zip -oextracted
 
