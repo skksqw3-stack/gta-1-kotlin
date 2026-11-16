@@ -56,32 +56,43 @@ jobs:
           mkdir -p extracted
           7z x project.zip -oextracted
 
+      - name: Setup Gradle Wrapper
+        run: |
+          # پیدا کردن مسیر پروژه
+          SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+          
+          cd "$PROJECT_DIR"
+          
+          # اگر فایل gradlew وجود نداشت، آن را با gradle نصب شده می‌سازیم
+          if [ ! -f "./gradlew" ]; then
+            echo "gradlew not found. Creating wrapper..."
+            
+            # دانلود و نصب Gradle (نسخه 7.5.1 برای سازگاری با Java 17)
+            wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
+            unzip -q gradle-7.5.1-bin.zip -d $HOME/gradle
+            export PATH=$PATH:$HOME/gradle/gradle-7.5.1/bin
+            
+            # ساخت فایل های wrapper
+            gradle wrapper --gradle-version 7.5.1
+            
+            echo "Gradle wrapper created successfully."
+          else
+            echo "gradlew already exists."
+          fi
+
       - name: Build Debug APK
         run: |
+          # پیدا کردن مسیر پروژه
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
-          if [ -z "$SETTINGS_FILE" ]; then
-            SETTINGS_FILE=$(find extracted -type f -path "*/app/build.gradle" -print -quit | sed 's|/app/build.gradle||')
-            if [ -z "$SETTINGS_FILE" ]; then
-              echo "ERROR: Android Gradle project not found."
-              exit 1
-            fi
-            PROJECT_DIR="$SETTINGS_FILE"
-          else
-            PROJECT_DIR=$(dirname "$SETTINGS_FILE")
-          fi
-
           echo "Android project found at: $PROJECT_DIR"
-
+          
           cd "$PROJECT_DIR"
-
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug --stacktrace
-          else
-            echo "Gradle wrapper not found."
-            exit 1
-          fi
+          
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
