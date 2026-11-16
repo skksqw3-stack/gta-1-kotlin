@@ -56,17 +56,25 @@ jobs:
           mkdir -p extracted
           7z x project.zip -oextracted
 
-      - name: Fix JCenter in build.gradle
+      - name: Fix JCenter and Kotlin Version
         run: |
           SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           
           echo "Fixing build.gradle in: $PROJECT_DIR"
           
+          # جایگزینی jcenter با mavenCentral
           find "$PROJECT_DIR" -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
           find "$PROJECT_DIR" -name "settings.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
           
-          echo "JCenter replaced with MavenCentral."
+          # ارتقای نسخه پلاگین Kotlin به 1.6.10
+          find "$PROJECT_DIR" -name "build.gradle" -exec sed -i "s/ext.kotlin_version = .*/ext.kotlin_version = '1.6.10'/g" {} +
+          find "$PROJECT_DIR" -name "build.gradle" -exec sed -i 's/org.jetbrains.kotlin:kotlin-gradle-plugin:.*/org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10/g' {} +
+          
+          # در فایل app/build.gradle نیز نسخه kotlin-android را به‌روزرسانی می‌کنیم
+          find "$PROJECT_DIR" -name "build.gradle" -exec sed -i 's/id .kotlin-android. version .*/id "kotlin-android" version "1.6.10"/g' {} +
+          
+          echo "JCenter replaced and Kotlin version upgraded."
 
       - name: Setup Gradle Wrapper 7.5.1
         run: |
@@ -89,7 +97,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '11'  # <--- سوییچ به Java 11 برای بیلد
+          java-version: '11'
 
       - name: Build Debug APK
         run: |
